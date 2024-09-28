@@ -1,0 +1,1 @@
+Placeholder file so that KeyRing folder is checked into repository, as the KeyRing folder existing is required for DataProtection to work.

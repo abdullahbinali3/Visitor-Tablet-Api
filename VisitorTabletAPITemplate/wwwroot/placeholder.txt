@@ -1,0 +1,1 @@
+﻿Placeholder file so that wwwroot folder is checked into repository, as the wwwroot folder existing is required for image upload to work.

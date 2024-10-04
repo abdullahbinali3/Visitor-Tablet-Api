@@ -2376,11 +2376,12 @@ and tblUsers.Email = @email
         public async Task<(VerifyCredentialsResult, UserData?)> VerifyCredentialsAndGetUserAsync(string email, string passwordPlainText, string? totpCode,
             string? loginSource, CancellationToken cancellationToken = default)
         {
-            UserData? userData;
-
-            using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
+            try
             {
-                string sql = $"""
+                UserData? userData;
+                using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
+                {
+                    string sql = $"""
                     declare @_uid uniqueidentifier
                     
                     select @_uid = Uid
@@ -2662,169 +2663,174 @@ and tblUsers.Email = @email
                     end
                     """;
 
-                DynamicParameters parameters = new DynamicParameters();
-                parameters.Add("@email", email, DbType.String, ParameterDirection.Input, 254);
+                    DynamicParameters parameters = new DynamicParameters();
+                    parameters.Add("@email", email, DbType.String, ParameterDirection.Input, 254);
 
-                CommandDefinition commandDefinition = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
+                    CommandDefinition commandDefinition = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
 
-                using SqlMapper.GridReader gridReader = await sqlConnection.QueryMultipleAsync(commandDefinition);
+                    using SqlMapper.GridReader gridReader = await sqlConnection.QueryMultipleAsync(commandDefinition);
 
-                userData = await gridReader.ReadFirstOrDefaultAsync<UserData>();
+                    userData = await gridReader.ReadFirstOrDefaultAsync<UserData>();
 
-                // User did not exist
-                if (userData is null)
-                {
-                    return (VerifyCredentialsResult.UserDidNotExist, null);
-                }
-
-                // Read extended data
-                userData.ExtendedData.Organizations = (await gridReader.ReadAsync<UserData_UserOrganizations>()).AsList();
-                userData.ExtendedData.LastUsedBuilding = await gridReader.ReadFirstOrDefaultAsync<UserData_LastUsedBuilding>();
-
-                List<UserData_Building> buildings = (await gridReader.ReadAsync<UserData_Building>()).AsList();
-                List<Guid> buildingsWithBookableDesks = (await gridReader.ReadAsync<Guid>()).AsList();
-                List<Guid> buildingsWithBookableMeetingRooms = (await gridReader.ReadAsync<Guid>()).AsList();
-                List<Guid> buildingsWithBookableAssetSlots = (await gridReader.ReadAsync<Guid>()).AsList();
-                List<UserData_PermanentSeat> permanentSeats = (await gridReader.ReadAsync<UserData_PermanentSeat>()).AsList();
-                List<UserData_AssetType> assetTypes = (await gridReader.ReadAsync<UserData_AssetType>()).AsList();
-                List<UserData_PermanentAsset> permanentAssets = (await gridReader.ReadAsync<UserData_PermanentAsset>()).AsList();
-                List<UserData_AdminFunction> adminFunctions = (await gridReader.ReadAsync<UserData_AdminFunction>()).AsList();
-                List<UserData_AdminAssetType> adminAssetTypes = (await gridReader.ReadAsync<UserData_AdminAssetType>()).AsList();
-
-                FillExtendedDataOrganizations(userData, buildings, buildingsWithBookableDesks, buildingsWithBookableMeetingRooms, buildingsWithBookableAssetSlots, permanentSeats, assetTypes, permanentAssets, adminFunctions, adminAssetTypes);
-
-                // User does not have access to the system
-                if (userData.Disabled || userData.UserSystemRole == UserSystemRole.NoAccess)
-                {
-                    return (VerifyCredentialsResult.NoAccess, null);
-                }
-
-                // User does not have a password (user must login using Single Sign On only)
-                if (userData.PasswordHash is null)
-                {
-                    return (VerifyCredentialsResult.PasswordNotSet, null);
-                }
-
-                // Check if user has been locked out due to too many invalid password attempts
-                if (userData.PasswordLockoutEndDateUtc > DateTime.UtcNow)
-                {
-                    return (VerifyCredentialsResult.PasswordLoginLockedOut, null);
-                }
-
-                // Check if 2fa is enabled
-                if (userData.TotpEnabled)
-                {
-                    // Check if user has been locked out due to too many invalid 2fa attempts
-                    if (userData.TotpLockoutEndDateUtc > DateTime.UtcNow)
+                    // User did not exist
+                    if (userData is null)
                     {
-                        return (VerifyCredentialsResult.TotpLockedOut, null);
+                        return (VerifyCredentialsResult.UserDidNotExist, null);
                     }
-                }
-                else
-                {
-                    // Clear totp secret if there was one loaded from database
-                    userData.TotpSecret = null;
-                }
 
-                // Validate credentials by recalculating the password hash and see if it matches
-                // the one stored in the database.
-                if (HMAC_Bcrypt.hmac_bcrypt_verify(passwordPlainText, userData.PasswordHash, _appSettings.Password.Pepper))
-                {
-                    // Perform additional verification if user's account has 2fa enabled
+                    // Read extended data
+                    userData.ExtendedData.Organizations = (await gridReader.ReadAsync<UserData_UserOrganizations>()).AsList();
+                    userData.ExtendedData.LastUsedBuilding = await gridReader.ReadFirstOrDefaultAsync<UserData_LastUsedBuilding>();
+
+                    List<UserData_Building> buildings = (await gridReader.ReadAsync<UserData_Building>()).AsList();
+                    List<Guid> buildingsWithBookableDesks = (await gridReader.ReadAsync<Guid>()).AsList();
+                    List<Guid> buildingsWithBookableMeetingRooms = (await gridReader.ReadAsync<Guid>()).AsList();
+                    List<Guid> buildingsWithBookableAssetSlots = (await gridReader.ReadAsync<Guid>()).AsList();
+                    List<UserData_PermanentSeat> permanentSeats = (await gridReader.ReadAsync<UserData_PermanentSeat>()).AsList();
+                    List<UserData_AssetType> assetTypes = (await gridReader.ReadAsync<UserData_AssetType>()).AsList();
+                    List<UserData_PermanentAsset> permanentAssets = (await gridReader.ReadAsync<UserData_PermanentAsset>()).AsList();
+                    List<UserData_AdminFunction> adminFunctions = (await gridReader.ReadAsync<UserData_AdminFunction>()).AsList();
+                    List<UserData_AdminAssetType> adminAssetTypes = (await gridReader.ReadAsync<UserData_AdminAssetType>()).AsList();
+
+                    FillExtendedDataOrganizations(userData, buildings, buildingsWithBookableDesks, buildingsWithBookableMeetingRooms, buildingsWithBookableAssetSlots, permanentSeats, assetTypes, permanentAssets, adminFunctions, adminAssetTypes);
+
+                    // User does not have access to the system
+                    if (userData.Disabled || userData.UserSystemRole == UserSystemRole.NoAccess)
+                    {
+                        return (VerifyCredentialsResult.NoAccess, null);
+                    }
+
+                    // User does not have a password (user must login using Single Sign On only)
+                    if (userData.PasswordHash is null)
+                    {
+                        return (VerifyCredentialsResult.PasswordNotSet, null);
+                    }
+
+                    // Check if user has been locked out due to too many invalid password attempts
+                    if (userData.PasswordLockoutEndDateUtc > DateTime.UtcNow)
+                    {
+                        return (VerifyCredentialsResult.PasswordLoginLockedOut, null);
+                    }
+
+                    // Check if 2fa is enabled
                     if (userData.TotpEnabled)
                     {
-                        // Confirm totp secret is not null
-                        if (string.IsNullOrEmpty(userData.TotpSecret))
+                        // Check if user has been locked out due to too many invalid 2fa attempts
+                        if (userData.TotpLockoutEndDateUtc > DateTime.UtcNow)
                         {
-                            // Should never happen - totp was enabled but user has no secret set in database
-                            return (VerifyCredentialsResult.UnknownError, null);
+                            return (VerifyCredentialsResult.TotpLockedOut, null);
                         }
-
-                        // Check if 6-digit code was not supplied
-                        if (string.IsNullOrEmpty(totpCode))
-                        {
-                            return (VerifyCredentialsResult.TotpCodeRequired, null);
-                        }
-
-                        // Verify the code
-                        VerifyTotpCodeResult verifyTotpCodeResult = _totpHelpers.VerifyCode(userData.Uid, totpCode!, userData.TotpSecret);
-
-                        // Clear totp secret from result before returning
-                        userData.TotpSecret = null;
-
-                        // Check totp verify result
-                        if (verifyTotpCodeResult != VerifyTotpCodeResult.Ok)
-                        {
-                            // Totp verify failed, clear password hash from result before returning
-                            userData.PasswordHash = null;
-
-                            switch (verifyTotpCodeResult)
-                            {
-                                case VerifyTotpCodeResult.TotpCodeInvalid:
-                                    // Since code was wrong, increment totp failure count
-                                    (SqlQueryResult incrementTotpFailureCountResult, bool? isTotpLockedOut) = await IncrementTotpLoginFailureCountAsync(userData.Uid, sqlConnection, loginSource, UserLoginType.LocalPassword);
-
-                                    if (incrementTotpFailureCountResult == SqlQueryResult.Ok && isTotpLockedOut.HasValue && isTotpLockedOut.Value)
-                                    {
-                                        // Account is now locked out after too many failed password attempts
-                                        return (VerifyCredentialsResult.TotpLockedOut, null);
-                                    }
-
-                                    return (VerifyCredentialsResult.TotpCodeInvalid, null);
-                                case VerifyTotpCodeResult.TotpCodeAlreadyUsed:
-                                    // Reject duplicate codes, but don't count towards failures total
-                                    return (VerifyCredentialsResult.TotpCodeAlreadyUsed, null);
-                                default:
-                                    // This should never happen
-                                    return (VerifyCredentialsResult.UnknownError, null);
-                            }
-                        }
-                    }
-
-                    // If stored password hash's BcryptCost is different to appsetting.json's BcryptCost,
-                    // recalculate the hash with the new cost value, and update it back to the database.
-                    // This is so in future if we increase the cost in appsettings.json for better security,
-                    // then the next time a user with a hash generated with a lower cost value logs in,
-                    // we'll update their stored hash to a stronger one.
-
-                    string[] sets = userData.PasswordHash.Split("$");
-                    int currentHashCost = short.Parse(sets[2]);
-
-                    // Uses != instead of < just in case for some reason we want to update existing hashes
-                    // to a lower cost.
-                    if (currentHashCost != _appSettings.Password.BcryptCost)
-                    {
-                        // Rehash the user's password. Also updates user's last access date.
-                        await RehashPasswordForUserAsync(userData.Uid, passwordPlainText, sqlConnection);
                     }
                     else
                     {
-                        // Update user's last access date.
-                        (SqlQueryResult updateAccessDateResult, DateTime? newAccessDate) = await UpdateLastAccessDateForUserAsync(userData.Uid, sqlConnection, true, loginSource, UserLoginType.LocalPassword);
-
-                        if (updateAccessDateResult == SqlQueryResult.Ok)
-                        {
-                            userData.LastAccessDateUtc = newAccessDate;
-                        }
+                        // Clear totp secret if there was one loaded from database
+                        userData.TotpSecret = null;
                     }
 
-                    // Clear password hash from result before returning
-                    userData.PasswordHash = null;
+                    // Validate credentials by recalculating the password hash and see if it matches
+                    // the one stored in the database.
+                    if (HMAC_Bcrypt.hmac_bcrypt_verify(passwordPlainText, userData.PasswordHash, _appSettings.Password.Pepper))
+                    {
+                        // Perform additional verification if user's account has 2fa enabled
+                        if (userData.TotpEnabled)
+                        {
+                            // Confirm totp secret is not null
+                            if (string.IsNullOrEmpty(userData.TotpSecret))
+                            {
+                                // Should never happen - totp was enabled but user has no secret set in database
+                                return (VerifyCredentialsResult.UnknownError, null);
+                            }
 
-                    return (VerifyCredentialsResult.Ok, userData);
+                            // Check if 6-digit code was not supplied
+                            if (string.IsNullOrEmpty(totpCode))
+                            {
+                                return (VerifyCredentialsResult.TotpCodeRequired, null);
+                            }
+
+                            // Verify the code
+                            VerifyTotpCodeResult verifyTotpCodeResult = _totpHelpers.VerifyCode(userData.Uid, totpCode!, userData.TotpSecret);
+
+                            // Clear totp secret from result before returning
+                            userData.TotpSecret = null;
+
+                            // Check totp verify result
+                            if (verifyTotpCodeResult != VerifyTotpCodeResult.Ok)
+                            {
+                                // Totp verify failed, clear password hash from result before returning
+                                userData.PasswordHash = null;
+
+                                switch (verifyTotpCodeResult)
+                                {
+                                    case VerifyTotpCodeResult.TotpCodeInvalid:
+                                        // Since code was wrong, increment totp failure count
+                                        (SqlQueryResult incrementTotpFailureCountResult, bool? isTotpLockedOut) = await IncrementTotpLoginFailureCountAsync(userData.Uid, sqlConnection, loginSource, UserLoginType.LocalPassword);
+
+                                        if (incrementTotpFailureCountResult == SqlQueryResult.Ok && isTotpLockedOut.HasValue && isTotpLockedOut.Value)
+                                        {
+                                            // Account is now locked out after too many failed password attempts
+                                            return (VerifyCredentialsResult.TotpLockedOut, null);
+                                        }
+
+                                        return (VerifyCredentialsResult.TotpCodeInvalid, null);
+                                    case VerifyTotpCodeResult.TotpCodeAlreadyUsed:
+                                        // Reject duplicate codes, but don't count towards failures total
+                                        return (VerifyCredentialsResult.TotpCodeAlreadyUsed, null);
+                                    default:
+                                        // This should never happen
+                                        return (VerifyCredentialsResult.UnknownError, null);
+                                }
+                            }
+                        }
+
+                        // If stored password hash's BcryptCost is different to appsetting.json's BcryptCost,
+                        // recalculate the hash with the new cost value, and update it back to the database.
+                        // This is so in future if we increase the cost in appsettings.json for better security,
+                        // then the next time a user with a hash generated with a lower cost value logs in,
+                        // we'll update their stored hash to a stronger one.
+
+                        string[] sets = userData.PasswordHash.Split("$");
+                        int currentHashCost = short.Parse(sets[2]);
+
+                        // Uses != instead of < just in case for some reason we want to update existing hashes
+                        // to a lower cost.
+                        if (currentHashCost != _appSettings.Password.BcryptCost)
+                        {
+                            // Rehash the user's password. Also updates user's last access date.
+                            await RehashPasswordForUserAsync(userData.Uid, passwordPlainText, sqlConnection);
+                        }
+                        else
+                        {
+                            // Update user's last access date.
+                            (SqlQueryResult updateAccessDateResult, DateTime? newAccessDate) = await UpdateLastAccessDateForUserAsync(userData.Uid, sqlConnection, true, loginSource, UserLoginType.LocalPassword);
+
+                            if (updateAccessDateResult == SqlQueryResult.Ok)
+                            {
+                                userData.LastAccessDateUtc = newAccessDate;
+                            }
+                        }
+
+                        // Clear password hash from result before returning
+                        userData.PasswordHash = null;
+
+                        return (VerifyCredentialsResult.Ok, userData);
+                    }
+
+                    // Increment PasswordLoginFailureCount
+                    (SqlQueryResult incrementPasswordFailureCountResult, bool? isPasswordLockedOut) = await IncrementPasswordLoginFailureCountAsync(userData.Uid, sqlConnection, loginSource, UserLoginType.LocalPassword);
+
+                    if (incrementPasswordFailureCountResult == SqlQueryResult.Ok && isPasswordLockedOut.HasValue && isPasswordLockedOut.Value)
+                    {
+                        // Account is now locked out after too many failed password attempts
+                        return (VerifyCredentialsResult.PasswordLoginLockedOut, null);
+                    }
+
+                    // Invalid credentials
+                    return (VerifyCredentialsResult.PasswordInvalid, null);
                 }
-
-                // Increment PasswordLoginFailureCount
-                (SqlQueryResult incrementPasswordFailureCountResult, bool? isPasswordLockedOut) = await IncrementPasswordLoginFailureCountAsync(userData.Uid, sqlConnection, loginSource, UserLoginType.LocalPassword);
-
-                if (incrementPasswordFailureCountResult == SqlQueryResult.Ok && isPasswordLockedOut.HasValue && isPasswordLockedOut.Value)
-                {
-                    // Account is now locked out after too many failed password attempts
-                    return (VerifyCredentialsResult.PasswordLoginLockedOut, null);
-                }
-
-                // Invalid credentials
-                return (VerifyCredentialsResult.PasswordInvalid, null);
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
 

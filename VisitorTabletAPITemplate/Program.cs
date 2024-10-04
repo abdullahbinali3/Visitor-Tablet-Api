@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
 using System.Net;
@@ -60,6 +61,43 @@ try
         };
     });
 
+    // Register the Swagger generator service
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new OpenApiInfo
+        {
+            Version = "v1",
+            Title = "Visitor Tablet API Template",
+            Description = "API Documentation",
+        });
+
+        // Optional: Add security definitions for JWT authentication, if used.
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Description = "JWT Authorization header using the Bearer scheme.",
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "Bearer"
+        });
+
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+    });
+
     // Set up FusionCache
     SetupFusionCache(builder);
 
@@ -88,6 +126,15 @@ try
     SetupVisitorTabletRepositories(builder);
 
     WebApplication app = builder.Build();
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+            c.RoutePrefix = "swagger";
+        });
+    }
     app.UseForwardedHeaders();
     app.UseMyExceptionHandler();
     app.UseCors("CorsPolicy");
@@ -386,6 +433,7 @@ static void SetupRepositories(WebApplicationBuilder builder)
 {
     builder.Services.AddSingleton<BuildingsRepository>();
     builder.Services.AddSingleton<FunctionsRepository>();
+    builder.Services.AddSingleton<VisitTrackingRepository>();
     builder.Services.AddSingleton<OrganizationsRepository>();
     builder.Services.AddSingleton<RegionsRepository>();
 }

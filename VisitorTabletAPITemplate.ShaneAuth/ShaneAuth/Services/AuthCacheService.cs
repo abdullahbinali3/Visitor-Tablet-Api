@@ -3,7 +3,7 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using VisitorTabletAPITemplate.Models;
 using VisitorTabletAPITemplate.ShaneAuth.Enums;
-using VisitorTabletAPITemplate.Shared;
+//using VisitorTabletAPITemplate.Shared;
 using ZiggyCreatures.Caching.Fusion;
 using static Dapper.SqlMapper;
 

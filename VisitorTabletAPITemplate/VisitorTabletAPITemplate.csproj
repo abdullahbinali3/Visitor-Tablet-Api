@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\VisitorTabletAPITemplate.ShaneAuth\VisitorTabletAPITemplate.ShaneAuth.csproj" />
     <ProjectReference Include="..\VisitorTabletAPITemplate.Shared\VisitorTabletAPITemplate.Shared.csproj" />
     <ProjectReference Include="..\VisitorTabletAPITemplate.VisitorTablet\VisitorTabletAPITemplate.VisitorTablet.csproj" />

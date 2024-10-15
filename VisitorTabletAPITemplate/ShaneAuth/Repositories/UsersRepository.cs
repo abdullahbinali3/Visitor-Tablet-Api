@@ -14824,5 +14824,38 @@ end
                 return (queryResult, userData);
             }
         }
+        public async Task<SqlQueryResult> SignInAsync(Guid workplaceVisitId, Guid uid, DateTime? signInDateUtc)
+        {
+            // Use connection string from app settings
+            using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
+            {
+                await sqlConnection.OpenAsync();
+
+                // First, check if the record exists
+                var checkQuery = @"
+            SELECT COUNT(1)
+            FROM [dbo].[tblWorkplaceVisitUserJoin]
+            WHERE [WorkplaceVisitId] = @WorkplaceVisitId AND [Uid] = @Uid";
+
+                var exists = await sqlConnection.ExecuteScalarAsync<int>(checkQuery, new { WorkplaceVisitId = workplaceVisitId, Uid = uid });
+
+                // If record doesn't exist, return appropriate result
+                if (exists == 0)
+                {
+                    return SqlQueryResult.RecordDidNotExist;
+                }
+
+                // If record exists, update the SignInDateUtc
+                var updateQuery = @"
+            UPDATE [dbo].[tblWorkplaceVisitUserJoin]
+            SET [SignInDateUtc] = @SignInDateUtc
+            WHERE [WorkplaceVisitId] = @WorkplaceVisitId AND [Uid] = @Uid";
+
+                var rowsAffected = await sqlConnection.ExecuteAsync(updateQuery, new { SignInDateUtc = signInDateUtc, WorkplaceVisitId = workplaceVisitId, Uid = uid });
+
+                return rowsAffected > 0 ? SqlQueryResult.Ok : SqlQueryResult.UnknownError;
+            }
+        }
+
     }
 }

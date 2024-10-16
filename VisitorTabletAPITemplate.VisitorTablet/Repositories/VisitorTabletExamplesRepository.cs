@@ -1,10 +1,5 @@
-﻿using Dapper;
-using Microsoft.Data.SqlClient;
-using System.Data;
-using VisitorTabletAPITemplate.Models;
-using VisitorTabletAPITemplate.VisitorTablet.Enums;
+﻿using VisitorTabletAPITemplate.VisitorTablet.Enums;
 using VisitorTabletAPITemplate.VisitorTablet.Models;
-using static Dapper.SqlMapper;
 
 namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
 {

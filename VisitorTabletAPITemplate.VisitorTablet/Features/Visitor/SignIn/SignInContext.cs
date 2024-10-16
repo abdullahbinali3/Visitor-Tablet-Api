@@ -1,12 +1,12 @@
 ﻿using System.Text.Json.Serialization;
-using VisitorTabletAPITemplate.ShaneAuth.Models;
+using VisitorTabletAPITemplate.ObjectClasses;
 
-namespace VisitorTabletAPITemplate.ShaneAuth.Features.Users.SignIn
+namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
 {
-    
+
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
     [JsonSerializable(typeof(SignInRequest))]
-    [JsonSerializable(typeof(UserData))]
+    [JsonSerializable(typeof(List<SelectListItemGuid>))]
     [JsonSerializable(typeof(MyErrorResponse))]
     [JsonSerializable(typeof(MyInternalErrorResponse))]
     public partial class SignInContext : JsonSerializerContext { }

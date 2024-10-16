@@ -1,11 +1,10 @@
-﻿using System.Text.Json.Serialization;
-
-namespace VisitorTabletAPITemplate.ShaneAuth.Features.Users.SignIn
+﻿
+namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
 {
     public sealed class SignInRequest
     {
         public Guid WorkplaceVisitId { get; set; }
-        public Guid Uid { get; set; }
+        public List<Guid> Uid { get; set; }
         public DateTime? SignInDateUtc { get; set; }
     }
 }

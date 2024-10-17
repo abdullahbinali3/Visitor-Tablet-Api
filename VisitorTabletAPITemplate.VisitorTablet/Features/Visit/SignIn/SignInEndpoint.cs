@@ -30,15 +30,15 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
                 return;
             }
 
-            if (req.SignInDateUtc.HasValue)
+            if (req.SignInDate.HasValue)
             {
-                req.SignInDateUtc = req.SignInDateUtc.Value.ToUniversalTime();  // Convert to UTC if it has a value
+                req.SignInDate = req.SignInDate.Value.ToUniversalTime();  // Convert to UTC if it has a value
             }
 
             // Loop through Uids and try updating the SignInDateUtc for each
             foreach (var uid in req.Uid)
             {
-                var result = await _VisitorTabletVisitorRepository.SignInAsync(req.WorkplaceVisitId, uid, req.SignInDateUtc);
+                var result = await _VisitorTabletVisitorRepository.SignInAsync(req.WorkplaceVisitId, uid, req.SignInDate);
 
                 switch (result)
                 {
@@ -71,9 +71,9 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
                 AddError(m => m.Uid, "At least one Uid is required.", "error.uidsRequired");
             }
 
-            if (!req.SignInDateUtc.HasValue)
+            if (!req.SignInDate.HasValue)
             {
-                AddError(m => m.SignInDateUtc, "SignInDateUtc is required.", "error.signInDateRequired");
+                AddError(m => m.SignInDate, "SignInDateUtc is required.", "error.signInDateRequired");
             }
         }
     }

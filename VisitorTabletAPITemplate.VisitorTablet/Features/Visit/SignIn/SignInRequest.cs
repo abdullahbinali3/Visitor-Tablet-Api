@@ -5,7 +5,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
     {
         public Guid WorkplaceVisitId { get; set; }
         public List<Guid> Uid { get; set; }
-        public DateTime? SignInDateUtc { get; set; }
+        public DateTime? SignInDate { get; set; }
     }
 }
    

@@ -15,7 +15,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
 
         public override void Configure()
         {
-            Post("/visitor/register");
+            Post("/visit/register");
             SerializerContext(RegisterContext.Default);
             Policies("User");
         }
@@ -41,12 +41,8 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
                 return;
             }
 
-            // Set InsertDateUtc for the request
-           
-            req.InsertDateUtc = DateTime.UtcNow; // Set the current UTC time
-
             // Insert data into the database
-            var result = await _VisitorTabletVisitorRepository.InsertVisitorAsync(req, req.FormCompletedByUid, adminUserDisplayName, HttpContext.Connection.RemoteIpAddress?.ToString());
+            var result = await _VisitorTabletVisitorRepository.InsertVisitorAsync(req, adminUserDisplayName, HttpContext.Connection.RemoteIpAddress?.ToString());
 
             // Handle the result of the insertion
             if (result == SqlQueryResult.Ok)
@@ -55,7 +51,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
             }
             else
             {
-                AddError("An error occurred while registering the visitor.");
+                AddError("Please fill in the correct request body.");
                 await SendErrorsAsync();
             }
         }

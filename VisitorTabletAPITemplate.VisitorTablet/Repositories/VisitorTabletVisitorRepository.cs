@@ -62,7 +62,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
             }
         }
 
-        public async Task<SqlQueryResult> InsertVisitorAsync(RegisterRequest request, Guid FormCompletedByUid, string adminUserDisplayName, string? remoteIpAddress)
+        public async Task<SqlQueryResult> InsertVisitorAsync(RegisterRequest request, string adminUserDisplayName, string? remoteIpAddress)
         {
             using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
             {
@@ -83,21 +83,25 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
                 @FormCompletedByUid, @HostUid, @StartDateUtc, @StartDateLocal, 
                 @EndDateUtc, @EndDateLocal, @PurposeOfVisit, 0, 0, 0);
         ";
+                        Guid WorkplaceVisitId = Guid.NewGuid();
+                        Guid FormCompletedByUid = Guid.NewGuid();
+                        DateTime InsertDateUtc = DateTime.UtcNow;
+                         
                         var visitParameters = new DynamicParameters();
-                        visitParameters.Add("@id", request.WorkplaceVisitId, DbType.Guid, ParameterDirection.Input);
-                        visitParameters.Add("@InsertDateUtc", request.InsertDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
+                        visitParameters.Add("@id", WorkplaceVisitId, DbType.Guid, ParameterDirection.Input);
+                        visitParameters.Add("@InsertDateUtc", InsertDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
                         visitParameters.Add("@BuildingId", Guid.NewGuid(), DbType.Guid, ParameterDirection.Input);
                         visitParameters.Add("@FormCompletedByUid", FormCompletedByUid, DbType.Guid, ParameterDirection.Input);
                         visitParameters.Add("@HostUid", Guid.NewGuid(), DbType.Guid, ParameterDirection.Input);
-                        visitParameters.Add("@StartDateUtc", request.StartDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
-                        visitParameters.Add("@StartDateLocal", request.StartDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
-                        visitParameters.Add("@EndDateUtc", request.EndDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
-                        visitParameters.Add("@EndDateLocal", request.EndDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
+                        visitParameters.Add("@StartDateUtc", request.StartDate.ToUniversalTime(), DbType.DateTime2, ParameterDirection.Input, 3);
+                        visitParameters.Add("@StartDateLocal", request.StartDate, DbType.DateTime2, ParameterDirection.Input, 3);
+                        visitParameters.Add("@EndDateUtc", request.EndDate.ToUniversalTime(), DbType.DateTime2, ParameterDirection.Input, 3);
+                        visitParameters.Add("@EndDateLocal", request.EndDate, DbType.DateTime2, ParameterDirection.Input, 3);
                         visitParameters.Add("@PurposeOfVisit", RemoveSpecialCharacters(request.Purpose), DbType.String, ParameterDirection.Input, 4000);
 
                         await sqlConnection.ExecuteAsync(insertVisitSql, visitParameters, transaction);
                         // Log the visit insertion
-                        await LogVisitAsync(sqlConnection, transaction, request.WorkplaceVisitId,request.OrganizationId, FormCompletedByUid, adminUserDisplayName, remoteIpAddress, "Insert", request.StartDateUtc, request.EndDateUtc, request.Purpose);
+                        await LogVisitAsync(sqlConnection, transaction, FormCompletedByUid, WorkplaceVisitId,request.OrganizationId, FormCompletedByUid, adminUserDisplayName, remoteIpAddress, "Insert", request.StartDate.ToUniversalTime(), request.EndDate.ToUniversalTime(), request.Purpose);
 
                         int userResultCode = 0 , resultCode = 0;
                         foreach (var user in request.Users)
@@ -109,23 +113,22 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
                 Email, MobileNumber, SignInDateUtc, SignOutDateUtc)
             VALUES 
                 (@workplaceVisitId, @uid, @InsertDateUtc, @firstName, @surname, 
-                @Email, @MobileNumber, @SignInDateUtc, @SignOutDateUtc);
+                @Email, @MobileNumber, null, null);
         ";
+                            Guid Uid = FormCompletedByUid;
                             DynamicParameters userJoinParameters = new DynamicParameters();
-                            userJoinParameters.Add("@workplaceVisitId", request.WorkplaceVisitId, DbType.Guid, ParameterDirection.Input);
-                            userJoinParameters.Add("@uid", user.Uid, DbType.Guid, ParameterDirection.Input);
-                            userJoinParameters.Add("@InsertDateUtc", request.InsertDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
+                            userJoinParameters.Add("@workplaceVisitId", WorkplaceVisitId, DbType.Guid, ParameterDirection.Input);
+                            userJoinParameters.Add("@uid", Uid, DbType.Guid, ParameterDirection.Input);
+                            userJoinParameters.Add("@InsertDateUtc", InsertDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
                             userJoinParameters.Add("@firstName", RemoveSpecialCharacters(user.FirstName), DbType.String, ParameterDirection.Input, 75);
                             userJoinParameters.Add("@surname", RemoveSpecialCharacters(user.Surname), DbType.String, ParameterDirection.Input, 75);
                             userJoinParameters.Add("@Email", user.Email, DbType.String, ParameterDirection.Input, 254);
                             userJoinParameters.Add("@MobileNumber", user.MobileNumber, DbType.String, ParameterDirection.Input, 30);
-                            userJoinParameters.Add("@SignInDateUtc", request.SignInDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
-                            userJoinParameters.Add("@SignOutDateUtc", request.SignOutDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
 
                             // Execute the SQL and retrieve the number of affected rows for UserJoin
                             resultCode = await sqlConnection.ExecuteAsync(insertUserJoinSql, userJoinParameters, transaction);
                             // Log the user join insertion
-                            await LogUserJoinAsync(sqlConnection, transaction, request.WorkplaceVisitId, request.OrganizationId, user, adminUserDisplayName, remoteIpAddress, "Insert");
+                            await LogUserJoinAsync(sqlConnection, transaction, Uid, WorkplaceVisitId, request.OrganizationId, user, adminUserDisplayName, remoteIpAddress, "Insert");
 
                             // Insert into tblUsers
                             string insertUserSql = @"
@@ -153,8 +156,8 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
 
                             // Map parameters for tblUsers
                             DynamicParameters userParameters = new DynamicParameters();
-                            userParameters.Add("@uid", user.Uid, DbType.Guid, ParameterDirection.Input);
-                            userParameters.Add("@InsertDateUtc", request.InsertDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
+                            userParameters.Add("@uid", Uid, DbType.Guid, ParameterDirection.Input);
+                            userParameters.Add("@InsertDateUtc", InsertDateUtc, DbType.DateTime2, ParameterDirection.Input, 3);
                             userParameters.Add("@Email", user.Email, DbType.String, ParameterDirection.Input, 254);
                             userParameters.Add("@DisplayName", adminUserDisplayName, DbType.String, ParameterDirection.Input, 151); // Adjusted to match nvarchar(151)
                             userParameters.Add("@FirstName", RemoveSpecialCharacters(user.FirstName), DbType.String, ParameterDirection.Input, 75);
@@ -185,7 +188,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
         }
 
         // Log visit insertion
-        private async Task LogVisitAsync(SqlConnection sqlConnection, IDbTransaction transaction, Guid workplaceVisitId,Guid OrganizationId, Guid formCompletedByUid, string adminUserDisplayName, string? remoteIpAddress, string logAction, DateTime startDateUtc, DateTime endDateUtc, string purposeOfVisit)
+        private async Task LogVisitAsync(SqlConnection sqlConnection, IDbTransaction transaction,Guid Uid, Guid workplaceVisitId,Guid OrganizationId, Guid formCompletedByUid, string adminUserDisplayName, string? remoteIpAddress, string logAction, DateTime startDateUtc, DateTime endDateUtc, string purposeOfVisit)
         {
             string logSql = @"
 INSERT INTO [dbo].[tblWorkplaceVisits_Log] 
@@ -246,7 +249,7 @@ VALUES
         }
 
         // Log user join insertion
-        private async Task LogUserJoinAsync(SqlConnection sqlConnection, IDbTransaction transaction, Guid workplaceVisitId, Guid OrganizationId, UserInfo user, string adminUserDisplayName, string? remoteIpAddress, string logAction)
+        private async Task LogUserJoinAsync(SqlConnection sqlConnection, IDbTransaction transaction,Guid Uid, Guid workplaceVisitId, Guid OrganizationId, UserInfo user, string adminUserDisplayName, string? remoteIpAddress, string logAction)
         {
             string logUserJoinSql = @"
 INSERT INTO [dbo].[tblWorkplaceVisitUserJoin_Log] 
@@ -264,18 +267,18 @@ VALUES
             var userJoinLogParameters = new DynamicParameters();
             userJoinLogParameters.Add("@id", Guid.NewGuid(), DbType.Guid);
             userJoinLogParameters.Add("@InsertDateUtc", DateTime.UtcNow, DbType.DateTime2);
-            userJoinLogParameters.Add("@UpdatedByUid", user.Uid, DbType.Guid);
+            userJoinLogParameters.Add("@UpdatedByUid", Uid, DbType.Guid);
             userJoinLogParameters.Add("@UpdatedByDisplayName", adminUserDisplayName, DbType.String,  ParameterDirection.Input,151);
             userJoinLogParameters.Add("@UpdatedByIpAddress", remoteIpAddress, DbType.String,  ParameterDirection.Input,45);
             userJoinLogParameters.Add("@LogDescription", "User added to visit: " + user.FirstName + " " + user.Surname, DbType.String,  ParameterDirection.Input,4000);
             userJoinLogParameters.Add("@WorkplaceVisitId", workplaceVisitId, DbType.Guid);
             userJoinLogParameters.Add("@OrganizationId", OrganizationId, DbType.Guid);
-            userJoinLogParameters.Add("@Uid", user.Uid, DbType.Guid);
+            userJoinLogParameters.Add("@Uid", Uid, DbType.Guid);
             userJoinLogParameters.Add("@FirstName", RemoveSpecialCharacters(user.FirstName), DbType.String,  ParameterDirection.Input,75);
             userJoinLogParameters.Add("@Surname", RemoveSpecialCharacters(user.Surname), DbType.String,  ParameterDirection.Input,75);
             userJoinLogParameters.Add("@Email", user.Email, DbType.String,  ParameterDirection.Input,254);
             userJoinLogParameters.Add("@MobileNumber", user.MobileNumber, DbType.String,  ParameterDirection.Input,30);
-            userJoinLogParameters.Add("@SignInDateUtc", DateTime.UtcNow, DbType.DateTime2);
+            userJoinLogParameters.Add("@SignInDateUtc", null, DbType.DateTime2);
             userJoinLogParameters.Add("@SignOutDateUtc", null, DbType.DateTime2);
             userJoinLogParameters.Add("@LogAction", logAction, DbType.String,  ParameterDirection.Input,50);
 

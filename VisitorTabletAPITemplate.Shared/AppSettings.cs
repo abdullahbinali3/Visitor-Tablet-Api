@@ -15,6 +15,7 @@ namespace VisitorTabletAPITemplate
         public required AppSettings_Cache Cache { get; init; }
         public required AppSettings_EmailNotifications EmailNotifications { get; init; }
         public required AppSettings_GoogleMaps GoogleMaps { get; init; }
+        public required AppSettings_Organization Organization { get; init; }
         public required AppSettings_FileUpload FileUpload { get; init; }
         public required AppSettings_ImageUpload ImageUpload { get; init; }
 
@@ -180,6 +181,11 @@ namespace VisitorTabletAPITemplate
     public sealed class AppSettings_GoogleMaps
     {
         public required string GoogleMapsApiKey { get; init; }
+    }
+
+    public sealed class AppSettings_Organization
+    {
+        public required string EncryptionKeyEncryptionKey { get; init; }
     }
 
     public sealed class AppSettings_FileUpload

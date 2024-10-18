@@ -441,6 +441,7 @@ static void SetupVisitorTabletRepositories(WebApplicationBuilder builder)
 {
     builder.Services.AddSingleton<VisitorTabletExamplesRepository>();
     builder.Services.AddSingleton<VisitorTabletBuildingsRepository>();
+    builder.Services.AddSingleton<VisitorTabletOrganizationsRepository>();
 }
 
 static void SetupHttpClients(WebApplicationBuilder builder)

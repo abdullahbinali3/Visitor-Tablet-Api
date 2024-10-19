@@ -20,7 +20,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Get
 
         public override void Configure()
         {
-            Get("/visitorTablet/getVisitors/{HostUid}");
+            Get("/visitor/{HostUid}/listForDropdown");
             SerializerContext(GetVisitorsContext.Default);
             Policies("User");
         }

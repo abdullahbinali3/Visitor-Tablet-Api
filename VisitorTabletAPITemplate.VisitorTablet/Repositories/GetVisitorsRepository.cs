@@ -19,7 +19,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
             using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
             {
                 string sql = @"
-                select u.FirstName, u.Surname
+                select u.FirstName, u.Surname, u.WorkplaceVisitId
                 from dbo.tblWorkplaceVisitUserJoin u
                 join dbo.tblWorkplaceVisits w on u.WorkplaceVisitId = w.id
                 where w.hostUid = @hostUid";

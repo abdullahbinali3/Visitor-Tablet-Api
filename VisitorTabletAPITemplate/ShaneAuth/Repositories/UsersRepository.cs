@@ -14824,6 +14824,6 @@ end
                 return (queryResult, userData);
             }
         }
-        
+
     }
 }

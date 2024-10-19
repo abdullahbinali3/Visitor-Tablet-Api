@@ -443,7 +443,11 @@ static void SetupVisitorTabletRepositories(WebApplicationBuilder builder)
     builder.Services.AddSingleton<VisitorTabletVisitorRepository>();
     builder.Services.AddSingleton<GetHostsRepository>();
     builder.Services.AddSingleton<VisitorTabletBuildingsRepository>();
+<<<<<<< HEAD
     builder.Services.AddSingleton<GetVisitorsRepository>();
+=======
+    builder.Services.AddSingleton<VisitorTabletVisitorRepository>();
+>>>>>>> 44e5cc5 (feat(register-visitor): add logging and refactor code from Template to VisitorTablet project)
 }
 
 static void SetupHttpClients(WebApplicationBuilder builder)

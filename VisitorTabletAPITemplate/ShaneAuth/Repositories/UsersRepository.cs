@@ -2,6 +2,7 @@
 using hmac_bcrypt;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text;
 using VisitorTabletAPITemplate.Enums;
@@ -20,6 +21,7 @@ using VisitorTabletAPITemplate.ShaneAuth.Features.Master.Users.CreateUser;
 using VisitorTabletAPITemplate.ShaneAuth.Features.Master.Users.DeleteUser;
 using VisitorTabletAPITemplate.ShaneAuth.Features.Master.Users.ListUsersForDataTable;
 using VisitorTabletAPITemplate.ShaneAuth.Features.Master.Users.UpdateUser;
+using VisitorTabletAPITemplate.ShaneAuth.Features.User.RegisterVisitor;
 using VisitorTabletAPITemplate.ShaneAuth.Features.User.TwoFactorAuthentication.InitDisableTwoFactorAuthentication;
 using VisitorTabletAPITemplate.ShaneAuth.Features.User.TwoFactorAuthentication.InitTwoFactorAuthentication;
 using VisitorTabletAPITemplate.ShaneAuth.Features.User.UpdateProfile;
@@ -14824,6 +14826,6 @@ end
                 return (queryResult, userData);
             }
         }
-        
+
     }
 }

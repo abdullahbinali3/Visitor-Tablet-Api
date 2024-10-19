@@ -2,7 +2,6 @@
 using hmac_bcrypt;
 using Microsoft.Data.SqlClient;
 using System.Data;
-using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text;
 using VisitorTabletAPITemplate.Enums;

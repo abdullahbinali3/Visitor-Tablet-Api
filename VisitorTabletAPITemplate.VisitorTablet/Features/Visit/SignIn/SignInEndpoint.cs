@@ -5,11 +5,11 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
 {
     public sealed class SignInEndpoint : Endpoint<SignInRequest>
     {
-        private readonly VisitorTabletVisitorRepository _VisitorTabletVisitorRepository;
+        private readonly TabletVisitRepository _TabletVisitRepository;
 
-        public SignInEndpoint(VisitorTabletVisitorRepository VisitorTabletVisitorRepository)
+        public SignInEndpoint(TabletVisitRepository TabletVisitRepository)
         {
-            _VisitorTabletVisitorRepository = VisitorTabletVisitorRepository;
+            _TabletVisitRepository = TabletVisitRepository;
         }
 
         public override void Configure()
@@ -38,7 +38,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
             // Loop through Uids and try updating the SignInDateUtc for each
             foreach (var uid in req.Uid)
             {
-                var result = await _VisitorTabletVisitorRepository.SignInAsync(req.WorkplaceVisitId, uid, req.SignInDate);
+                var result = await _TabletVisitRepository.SignInAsync(req.WorkplaceVisitId, uid, req.SignInDate);
 
                 switch (result)
                 {

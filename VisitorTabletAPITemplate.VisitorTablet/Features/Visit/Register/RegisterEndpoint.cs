@@ -6,9 +6,9 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
 {
     public sealed class RegisterEndpoint : Endpoint<RegisterRequest>
     {
-        private readonly VisitorTabletVisitorRepository _VisitorTabletVisitorRepository;
+        private readonly TabletVisitRepository _VisitorTabletVisitorRepository;
 
-        public RegisterEndpoint(VisitorTabletVisitorRepository VisitorTabletVisitorRepository)
+        public RegisterEndpoint(TabletVisitRepository VisitorTabletVisitorRepository)
         {
             _VisitorTabletVisitorRepository = VisitorTabletVisitorRepository;
         }
@@ -22,6 +22,11 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
 
         public override async Task HandleAsync(RegisterRequest req, CancellationToken ct)
         {
+            if (IsRequestBodyEmpty(req))
+            {
+                AddError("Request body is empty or contains default values.");
+                await SendErrorsAsync();
+            }
             // Get logged-in user's details
             (Guid? userId, string? adminUserDisplayName) = User.GetIdAndName();
 
@@ -40,9 +45,10 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
                 await SendErrorsAsync();
                 return;
             }
+            var remoteIpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             // Insert data into the database
-            var result = await _VisitorTabletVisitorRepository.InsertVisitorAsync(req, adminUserDisplayName, HttpContext.Connection.RemoteIpAddress?.ToString());
+            var result = await _VisitorTabletVisitorRepository.InsertVisitorAsync(req, userId, adminUserDisplayName, remoteIpAddress);
 
             // Handle the result of the insertion
             if (result == SqlQueryResult.Ok)
@@ -75,6 +81,18 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
                     AddError("Email", "A valid email address is required.", "error.emailInvalid");
                 }
             }
+        }
+
+        private bool IsRequestBodyEmpty(RegisterRequest req)
+        {
+            return req.BuildingId == Guid.Empty &&
+                   req.OrganizationId == Guid.Empty &&
+                   req.HostUid == Guid.Empty &&
+                   string.IsNullOrWhiteSpace(req.Purpose) &&
+                   string.IsNullOrWhiteSpace(req.Company) &&
+                   req.StartDate == default(DateTime) &&
+                   req.EndDate == default(DateTime) &&
+                   (req.Users == null || !req.Users.Any());
         }
 
         private void AddError(string v1, string v2, string v3)

@@ -1,8 +1,6 @@
-﻿using Azure;
-using Dapper;
+﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
-using System.Reflection.PortableExecutable;
 using VisitorTabletAPITemplate.Enums;
 using VisitorTabletAPITemplate.ObjectClasses;
 using static Dapper.SqlMapper;

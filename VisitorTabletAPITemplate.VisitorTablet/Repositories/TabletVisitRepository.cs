@@ -81,11 +81,11 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
             INSERT INTO [dbo].[tblWorkplaceVisits] 
                 (id, InsertDateUtc, UpdatedDateUtc, BuildingId, RegisteredByVisitor, 
                 FormCompletedByUid, HostUid, StartDateUtc, StartDateLocal, 
-                EndDateUtc, EndDateLocal, PurposeOfVisit, Cancelled, Truncated, Deleted)
+                EndDateUtc, EndDateLocal, PurposeOfVisit, Company, Cancelled, Truncated, Deleted)
             VALUES 
                 (@id, @InsertDateUtc, @InsertDateUtc, @BuildingId, 1, 
                 @FormCompletedByUid, @HostUid, @StartDateUtc, @StartDateLocal, 
-                @EndDateUtc, @EndDateLocal, @PurposeOfVisit, 0, 0, 0);
+                @EndDateUtc, @EndDateLocal, @PurposeOfVisit, @Company, 0, 0, 0);
         ";
                         Guid WorkplaceVisitId = Guid.NewGuid();
                         Guid? FormCompletedByUid = userid;
@@ -104,6 +104,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
                         visitParameters.Add("@EndDateUtc", request.EndDate.ToUniversalTime(), DbType.DateTime2, ParameterDirection.Input, 3);
                         visitParameters.Add("@EndDateLocal", request.EndDate, DbType.DateTime2, ParameterDirection.Input, 3);
                         visitParameters.Add("@PurposeOfVisit", RemoveSpecialCharacters(request.Purpose), DbType.String, ParameterDirection.Input, 4000);
+                        visitParameters.Add("@Company", RemoveSpecialCharacters(request.Company), DbType.String, ParameterDirection.Input, 4000);
 
                         resultCode = await sqlConnection.ExecuteAsync(insertVisitSql, visitParameters, transaction);
                         // Log the visit insertion

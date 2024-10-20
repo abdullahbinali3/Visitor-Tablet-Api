@@ -2,8 +2,10 @@ using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Text.RegularExpressions;
+using System.Transactions;
 using VisitorTabletAPITemplate.Enums;
 using VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register;
+using VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn;
 using static Dapper.SqlMapper;
 namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
 {
@@ -26,8 +28,9 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
         /// <param name="signInDateUtc">The sign-in date and time in UTC.</param>
         /// <returns>Returns a SqlQueryResult indicating success, record not found, or an unknown error.</returns>
 
-        public async Task<SqlQueryResult> SignInAsync(Guid hostUid, Guid uid, DateTime? signInDateUtc)
+        public async Task<SqlQueryResult> SignInAsync(Guid uid, SignInRequest req)
         {
+
             // Use connection string from app settings
             using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
             {
@@ -42,7 +45,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
                 //WHERE [WorkplaceVisitId] = @WorkplaceVisitId AND [Uid] = @Uid";
 
 
-                var workplaceVisitIds = (await sqlConnection.QueryAsync<Guid>(checkQuery, new { HostUid = hostUid })).ToList();
+                var workplaceVisitIds = (await sqlConnection.QueryAsync<Guid>(checkQuery, new { HostUid = req.HostUid })).ToList();
 
                 //// If record doesn't exist, return appropriate result
                 //if (exists == 0)
@@ -55,11 +58,28 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
                 {
 
                     var updateQuery = @"
-            UPDATE [dbo].[tblWorkplaceVisitUserJoin]
-            SET [SignInDateUtc] = @SignInDateUtc
-            WHERE [WorkplaceVisitId] = @WorkplaceVisitId AND [Uid] = @Uid";
+UPDATE [dbo].[tblWorkplaceVisitUserJoin]
+SET [SignInDateUtc] = @SignInDateUtc,
+    [SignInDateLocal] = @SignInDateLocal
+WHERE [Uid] = @Uid
+AND [Uid] IN 
+(
+    SELECT u.Uid
+    FROM dbo.tblWorkplaceVisitUserJoin u 
+    JOIN dbo.tblWorkplaceVisits w ON u.WorkplaceVisitId = w.id
+    WHERE w.HostUid = @HostUid
+)";
 
-                    await sqlConnection.ExecuteAsync(updateQuery, new { SignInDateUtc = signInDateUtc, WorkplaceVisitId = workplaceVisitId, Uid = uid });
+
+
+                    var signParameters = new DynamicParameters();
+                    signParameters.Add("@SignInDateLocal", req.SignInDate, DbType.DateTime2); // No length needed
+                    signParameters.Add("@SignInDateUtc", req.SignInDate.ToUniversalTime(), DbType.DateTime2); // No length needed
+                    signParameters.Add("@HostUid", req.HostUid, DbType.Guid); // Adjust as necessary
+                    signParameters.Add("@Uid", uid, DbType.Guid); // Adjust as necessary
+
+                    await sqlConnection.ExecuteAsync(updateQuery, signParameters);
+
                 }
 
                 return SqlQueryResult.Ok;
@@ -90,6 +110,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
                         Guid WorkplaceVisitId = Guid.NewGuid();
                         Guid? FormCompletedByUid = userid;
                         DateTime InsertDateUtc = DateTime.UtcNow;
+
                         Guid Uid = Guid.NewGuid();
                         int userResultCode = 0, resultCode = 0;
 

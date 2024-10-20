@@ -38,7 +38,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
             // Loop through Uids and try updating the SignInDateUtc for each
             foreach (var uid in req.Uid)
             {
-                var result = await _TabletVisitRepository.SignInAsync(req.WorkplaceVisitId, uid, req.SignInDate);
+                var result = await _TabletVisitRepository.SignInAsync(req.HostUid, uid, req.SignInDate);
 
                 switch (result)
                 {
@@ -56,14 +56,14 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
                 }
             }
 
-            await SendOkAsync();
+            await SendOkAsync(true);
         }
 
         private void ValidateInput(SignInRequest req)
         {
-            if (req.WorkplaceVisitId == Guid.Empty)
+            if (req.HostUid == Guid.Empty)
             {
-                AddError(m => m.WorkplaceVisitId, "WorkplaceVisitId is required.", "error.workplaceVisitIdRequired");
+                AddError(m => m.HostUid, "HostUid is required.", "error.HostUidRequired");
             }
 
             if (req.Uid == null || !req.Uid.Any())

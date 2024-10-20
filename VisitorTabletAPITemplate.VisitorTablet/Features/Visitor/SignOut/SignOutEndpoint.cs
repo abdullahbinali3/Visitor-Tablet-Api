@@ -58,7 +58,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignOut
                 }
             }
 
-            await SendOkAsync();
+            await SendOkAsync(true);
         }
 
         private void ValidateInput(SignOutRequest req)

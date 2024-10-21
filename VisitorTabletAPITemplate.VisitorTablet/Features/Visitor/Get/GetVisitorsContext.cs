@@ -5,8 +5,8 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Get
 {
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
     [JsonSerializable(typeof(GetVisitorsRequest))]
-    [JsonSerializable(typeof(List<VisitorDto>))]
-    [JsonSerializable(typeof(VisitorDto))]
+    [JsonSerializable(typeof(List<Models.Visitor>))]
+    [JsonSerializable(typeof(Models.Visitor))]
     [JsonSerializable(typeof(MyErrorResponse))]
     [JsonSerializable(typeof(MyInternalErrorResponse))]
     public partial class GetVisitorsContext : JsonSerializerContext { }

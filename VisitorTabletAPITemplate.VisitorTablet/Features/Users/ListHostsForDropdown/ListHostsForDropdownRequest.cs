@@ -1,6 +1,6 @@
-﻿namespace VisitorTabletAPITemplate.VisitorTablet.Features.Host.GetHosts
+﻿namespace VisitorTabletAPITemplate.VisitorTablet.Features.User.ListHostsForDropdown
 {
-    public class GetHostsRequest
+    public sealed class ListHostsForDropdownRequest
     {
         public Guid? OrganizationId { get; set; }
         public bool? IncludeDisabled { get; set; }

@@ -1,31 +1,29 @@
-﻿using VisitorTabletAPITemplate.Models;
+﻿using VisitorTabletAPITemplate.ShaneAuth.Services;
 using VisitorTabletAPITemplate.ShaneAuth;
-using VisitorTabletAPITemplate.ShaneAuth.Enums;
-using VisitorTabletAPITemplate.ShaneAuth.Services;
 using VisitorTabletAPITemplate.VisitorTablet.Repositories;
 
-namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Get
+namespace VisitorTabletAPITemplate.VisitorTablet.Features.User.ListVisitorsForDropdown
 {
-    public class GetVisitorsEndpoint : Endpoint<GetVisitorsRequest>
+    public class ListVisitorsForDropdownEndpoint : Endpoint<ListVisitorsForDropdownRequest>
     {
-        private readonly GetVisitorsRepository _GetVisitorsRepository;
+        private readonly VisitorTabletUsersRepository _UserRepository;
         private readonly AuthCacheService _authCacheService;
 
-        public GetVisitorsEndpoint(GetVisitorsRepository GetVisitorsRepository,
+        public ListVisitorsForDropdownEndpoint(VisitorTabletUsersRepository UserRepository,
             AuthCacheService authCacheService)
         {
-            _GetVisitorsRepository = GetVisitorsRepository;
+            _UserRepository = UserRepository;
             _authCacheService = authCacheService;
         }
 
         public override void Configure()
         {
             Get("/visitor/{HostUid}/listForDropdown");
-            SerializerContext(GetVisitorsContext.Default);
+            SerializerContext(ListVisitorsForDropdownContext.Default);
             Policies("User");
         }
 
-        public override async Task HandleAsync(GetVisitorsRequest req, CancellationToken ct)
+        public override async Task HandleAsync(ListVisitorsForDropdownRequest req, CancellationToken ct)
         {
             // Get logged-in user's UID
             Guid? userId = User.GetId();
@@ -46,7 +44,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Get
             }
 
             // Query data
-            var visitors = await _GetVisitorsRepository.GetVisitorsAsync(req.HostUid, ct);
+            var visitors = await _UserRepository.GetVisitorsAsync(req.HostUid, ct);
 
             if (visitors is null)
             {
@@ -58,7 +56,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Get
             await SendOkAsync(visitors);
         }
 
-        private async Task<bool> ValidateInputAsync(GetVisitorsRequest req, Guid userId, CancellationToken cancellationToken)
+        private async Task<bool> ValidateInputAsync(ListVisitorsForDropdownRequest req, Guid userId, CancellationToken cancellationToken)
         {
             // Validate HostUid
             if (req.HostUid == null)

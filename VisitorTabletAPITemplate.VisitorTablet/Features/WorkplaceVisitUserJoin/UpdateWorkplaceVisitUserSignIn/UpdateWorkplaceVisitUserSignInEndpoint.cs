@@ -1,25 +1,25 @@
 ﻿using VisitorTabletAPITemplate.Enums;
 using VisitorTabletAPITemplate.VisitorTablet.Repositories;
 
-namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
+namespace VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisitUserJoin.UpdateWorkplaceVisitUserSignIn
 {
-    public sealed class SignInEndpoint : Endpoint<SignInRequest>
+    public sealed class UpdateWorkplaceVisitUserSignInEndpoint : Endpoint<UpdateWorkplaceVisitUserSignInRequest>
     {
-        private readonly TabletVisitRepository _TabletVisitRepository;
+        private readonly VisitorTabletWorkplaceVisitUserJoinRepository _WorkplaceVisitUserJoinRepository;
 
-        public SignInEndpoint(TabletVisitRepository TabletVisitRepository)
+        public UpdateWorkplaceVisitUserSignInEndpoint(VisitorTabletWorkplaceVisitUserJoinRepository WorkplaceVisitUserJoinRepository)
         {
-            _TabletVisitRepository = TabletVisitRepository;
+            _WorkplaceVisitUserJoinRepository = WorkplaceVisitUserJoinRepository;
         }
 
         public override void Configure()
         {
             Put("/visitor/signin");
-            SerializerContext(SignInContext.Default);
+            SerializerContext(UpdateWorkplaceVisitUserSignInContext.Default);
             Policies("User");
         }
 
-        public override async Task HandleAsync(SignInRequest req, CancellationToken ct)
+        public override async Task HandleAsync(UpdateWorkplaceVisitUserSignInRequest req, CancellationToken ct)
         {
             // Validate request
             ValidateInput(req);
@@ -33,7 +33,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
             // Loop through Uids and try updating the SignInDateUtc for each
             foreach (var uid in req.Uid)
             {
-                var result = await _TabletVisitRepository.SignInAsync(uid, req);
+                var result = await _WorkplaceVisitUserJoinRepository.SignInAsync(uid, req);
 
                 switch (result)
                 {
@@ -54,7 +54,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
             await SendOkAsync(true);
         }
 
-        private void ValidateInput(SignInRequest req)
+        private void ValidateInput(UpdateWorkplaceVisitUserSignInRequest req)
         {
             if (req.HostUid == Guid.Empty)
             {

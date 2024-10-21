@@ -2,25 +2,25 @@
 using VisitorTabletAPITemplate.ShaneAuth;
 using VisitorTabletAPITemplate.VisitorTablet.Repositories;
 
-namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
+namespace VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisits.CreateWorkplaceVisit
 {
-    public sealed class RegisterEndpoint : Endpoint<RegisterRequest>
+    public sealed class CreateWorkplaceVisitEndpoint : Endpoint<CreateWorkplaceVisitRequest>
     {
-        private readonly TabletVisitRepository _VisitorTabletVisitorRepository;
+        private readonly VisitorTabletWorkplaceVisitsRepository _WorkplaceVisitsRepository;
 
-        public RegisterEndpoint(TabletVisitRepository VisitorTabletVisitorRepository)
+        public CreateWorkplaceVisitEndpoint(VisitorTabletWorkplaceVisitsRepository WorkplaceVisitsRepository)
         {
-            _VisitorTabletVisitorRepository = VisitorTabletVisitorRepository;
+            _WorkplaceVisitsRepository = WorkplaceVisitsRepository;
         }
 
         public override void Configure()
         {
             Post("/visit/register");
-            SerializerContext(RegisterContext.Default);
+            SerializerContext(CreateWorkplaceVisitContext.Default);
             Policies("User");
         }
 
-        public override async Task HandleAsync(RegisterRequest req, CancellationToken ct)
+        public override async Task HandleAsync(CreateWorkplaceVisitRequest req, CancellationToken ct)
         {
             if (IsRequestBodyEmpty(req))
             {
@@ -35,10 +35,10 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
                 await SendForbiddenAsync();
                 return;
             }
-            
-                // Validate input
+
+            // Validate input
             ValidateInput(req);
-            
+
             // Stop if validation failed
             if (ValidationFailed)
             {
@@ -48,7 +48,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
             var remoteIpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             // Insert data into the database
-            var result = await _VisitorTabletVisitorRepository.InsertVisitorAsync(req, userId, adminUserDisplayName, remoteIpAddress);
+            var result = await _WorkplaceVisitsRepository.InsertVisitorAsync(req, userId, adminUserDisplayName, remoteIpAddress);
 
             // Handle the result of the insertion
             if (result == SqlQueryResult.Ok)
@@ -62,7 +62,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
             }
         }
 
-        private void ValidateInput(RegisterRequest req)
+        private void ValidateInput(CreateWorkplaceVisitRequest req)
         {
             foreach (var user in req.Users)
             {
@@ -83,7 +83,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
             }
         }
 
-        private bool IsRequestBodyEmpty(RegisterRequest req)
+        private bool IsRequestBodyEmpty(CreateWorkplaceVisitRequest req)
         {
             return req.BuildingId == Guid.Empty &&
                    req.OrganizationId == Guid.Empty &&

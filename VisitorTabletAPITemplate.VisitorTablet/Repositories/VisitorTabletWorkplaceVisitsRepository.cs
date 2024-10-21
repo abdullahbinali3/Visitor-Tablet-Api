@@ -1,92 +1,22 @@
-using Dapper;
+﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Text.RegularExpressions;
-using System.Transactions;
 using VisitorTabletAPITemplate.Enums;
-using VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register;
-using VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn;
-using static Dapper.SqlMapper;
+using VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisits.CreateWorkplaceVisit;
+
 namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
 {
-    public class TabletVisitRepository
+    public sealed class VisitorTabletWorkplaceVisitsRepository
     {
         private readonly AppSettings _appSettings;
 
-        public TabletVisitRepository(AppSettings appSettings)
+        public VisitorTabletWorkplaceVisitsRepository(AppSettings appSettings)
         {
             _appSettings = appSettings;
         }
 
-        /// <summary>
-        /// Attempts to sign in a user by updating the SignInDateUtc for a specific workplace visit and user.
-        /// First, it checks if a record exists with the given WorkplaceVisitId and Uid. 
-        /// If the record exists, it updates the SignInDateUtc; otherwise, it returns an error result.
-        /// </summary>
-        /// <param name="workplaceVisitId">The ID of the workplace visit.</param>
-        /// <param name="uid">The unique identifier of the user.</param>
-        /// <param name="signInDateUtc">The sign-in date and time in UTC.</param>
-        /// <returns>Returns a SqlQueryResult indicating success, record not found, or an unknown error.</returns>
-
-        public async Task<SqlQueryResult> SignInAsync(Guid uid, SignInRequest req)
-        {
-
-            // Use connection string from app settings
-            using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
-            {
-                await sqlConnection.OpenAsync();
-
-                // First, check if the record exists
-                var checkQuery = @"
-            SELECT Id
-            FROM [dbo].[tblWorkplaceVisits]
-            WHERE HostUid = @HostUid
-            ORDER BY InsertDateUtc DESC";
-                //WHERE [WorkplaceVisitId] = @WorkplaceVisitId AND [Uid] = @Uid";
-
-
-                var workplaceVisitIds = (await sqlConnection.QueryAsync<Guid>(checkQuery, new { HostUid = req.HostUid })).ToList();
-
-                //// If record doesn't exist, return appropriate result
-                //if (exists == 0)
-                //{
-                //    return SqlQueryResult.RecordDidNotExist;
-                //}
-
-                // If record exists, update the SignInDateUtc
-                foreach (var workplaceVisitId in workplaceVisitIds)
-                {
-
-                    var updateQuery = @"
-UPDATE [dbo].[tblWorkplaceVisitUserJoin]
-SET [SignInDateUtc] = @SignInDateUtc,
-    [SignInDateLocal] = @SignInDateLocal
-WHERE [Uid] = @Uid
-AND [Uid] IN 
-(
-    SELECT u.Uid
-    FROM dbo.tblWorkplaceVisitUserJoin u 
-    JOIN dbo.tblWorkplaceVisits w ON u.WorkplaceVisitId = w.id
-    WHERE w.HostUid = @HostUid
-)";
-
-
-
-                    var signParameters = new DynamicParameters();
-                    signParameters.Add("@SignInDateLocal", req.SignInDate, DbType.DateTime2); // No length needed
-                    signParameters.Add("@SignInDateUtc", req.SignInDate.ToUniversalTime(), DbType.DateTime2); // No length needed
-                    signParameters.Add("@HostUid", req.HostUid, DbType.Guid); // Adjust as necessary
-                    signParameters.Add("@Uid", uid, DbType.Guid); // Adjust as necessary
-
-                    await sqlConnection.ExecuteAsync(updateQuery, signParameters);
-
-                }
-
-                return SqlQueryResult.Ok;
-            }
-        }
-
-        public async Task<SqlQueryResult> InsertVisitorAsync(RegisterRequest request, Guid? userid, string adminUserDisplayName, string? remoteIpAddress)
+        public async Task<SqlQueryResult> InsertVisitorAsync(CreateWorkplaceVisitRequest request, Guid? userid, string adminUserDisplayName, string? remoteIpAddress)
         {
             using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
             {
@@ -98,15 +28,15 @@ AND [Uid] IN
                     {
                         // Insert into tblWorkplaceVisits
                         string insertVisitSql = @"
-            INSERT INTO [dbo].[tblWorkplaceVisits] 
-                (id, InsertDateUtc, UpdatedDateUtc, BuildingId, RegisteredByVisitor, 
-                FormCompletedByUid, HostUid, StartDateUtc, StartDateLocal, 
-                EndDateUtc, EndDateLocal, PurposeOfVisit, Company, Cancelled, Truncated, Deleted)
-            VALUES 
-                (@id, @InsertDateUtc, @InsertDateUtc, @BuildingId, 1, 
-                @FormCompletedByUid, @HostUid, @StartDateUtc, @StartDateLocal, 
-                @EndDateUtc, @EndDateLocal, @PurposeOfVisit, @Company, 0, 0, 0);
-        ";
+                                INSERT INTO [dbo].[tblWorkplaceVisits] 
+                                    (id, InsertDateUtc, UpdatedDateUtc, BuildingId, RegisteredByVisitor, 
+                                    FormCompletedByUid, HostUid, StartDateUtc, StartDateLocal, 
+                                    EndDateUtc, EndDateLocal, PurposeOfVisit, Company, Cancelled, Truncated, Deleted)
+                                VALUES 
+                                    (@id, @InsertDateUtc, @InsertDateUtc, @BuildingId, 1, 
+                                    @FormCompletedByUid, @HostUid, @StartDateUtc, @StartDateLocal, 
+                                    @EndDateUtc, @EndDateLocal, @PurposeOfVisit, @Company, 0, 0, 0);
+                            ";
                         Guid WorkplaceVisitId = Guid.NewGuid();
                         Guid? FormCompletedByUid = userid;
                         DateTime InsertDateUtc = DateTime.UtcNow;
@@ -150,26 +80,26 @@ AND [Uid] IN
                             {
                                 // Proceed with inserting the new user if the email doesn't exist
                                 string insertUserSql = @"
-    INSERT INTO [dbo].[tblUsers] 
-    (Uid, InsertDateUtc, UpdatedDateUtc, LastAccessDateUtc, 
-    LastPasswordChangeDateUtc, Email, 
-    PasswordHash, PasswordLoginFailureCount, 
-    PasswordLoginLastFailureDateUtc, PasswordLockoutEndDateUtc, 
-    TotpEnabled, TotpSecret, TotpFailureCount, 
-    TotpLastFailureDateUtc, TotpLockoutEndDateUtc, 
-    UserSystemRole, DisplayName, FirstName, 
-    Surname, Timezone, AvatarUrl, AvatarImageStorageId, 
-    AvatarThumbnailUrl, AvatarThumbnailStorageId, 
-    Disabled, Deleted)
-    VALUES 
-    (@uid, @InsertDateUtc, @InsertDateUtc, NULL, 
-    NULL, @Email, 
-    NULL, 0, NULL, 
-    NULL, 0, NULL, 0, 
-    NULL, NULL, 
-    1, @DisplayName, @FirstName, 
-    @Surname, @Timezone, NULL, NULL, 
-    NULL, NULL, 0, 0);";
+                                    INSERT INTO [dbo].[tblUsers] 
+                                    (Uid, InsertDateUtc, UpdatedDateUtc, LastAccessDateUtc, 
+                                    LastPasswordChangeDateUtc, Email, 
+                                    PasswordHash, PasswordLoginFailureCount, 
+                                    PasswordLoginLastFailureDateUtc, PasswordLockoutEndDateUtc, 
+                                    TotpEnabled, TotpSecret, TotpFailureCount, 
+                                    TotpLastFailureDateUtc, TotpLockoutEndDateUtc, 
+                                    UserSystemRole, DisplayName, FirstName, 
+                                    Surname, Timezone, AvatarUrl, AvatarImageStorageId, 
+                                    AvatarThumbnailUrl, AvatarThumbnailStorageId, 
+                                    Disabled, Deleted)
+                                    VALUES 
+                                    (@uid, @InsertDateUtc, @InsertDateUtc, NULL, 
+                                    NULL, @Email, 
+                                    NULL, 0, NULL, 
+                                    NULL, 0, NULL, 0, 
+                                    NULL, NULL, 
+                                    1, @DisplayName, @FirstName, 
+                                    @Surname, @Timezone, NULL, NULL, 
+                                    NULL, NULL, 0, 0);";
 
                                 // Map parameters for tblUsers
                                 DynamicParameters userParameters = new DynamicParameters();
@@ -187,13 +117,13 @@ AND [Uid] IN
 
                             // Insert into tblWorkplaceVisitUserJoin
                             string insertUserJoinSql = @"
-            INSERT INTO [dbo].[tblWorkplaceVisitUserJoin] 
-                (WorkplaceVisitId, Uid, InsertDateUtc, FirstName, Surname, 
-                Email, MobileNumber, SignInDateUtc, SignOutDateUtc)
-            VALUES 
-                (@workplaceVisitId, @uid, @InsertDateUtc, @firstName, @surname, 
-                @Email, @MobileNumber, null, null);
-        ";
+                                    INSERT INTO [dbo].[tblWorkplaceVisitUserJoin] 
+                                        (WorkplaceVisitId, Uid, InsertDateUtc, FirstName, Surname, 
+                                        Email, MobileNumber, SignInDateUtc, SignOutDateUtc)
+                                    VALUES 
+                                        (@workplaceVisitId, @uid, @InsertDateUtc, @firstName, @surname, 
+                                        @Email, @MobileNumber, null, null);
+                                ";
 
                             DynamicParameters userJoinParameters = new DynamicParameters();
                             userJoinParameters.Add("@workplaceVisitId", WorkplaceVisitId, DbType.Guid, ParameterDirection.Input);
@@ -236,27 +166,27 @@ AND [Uid] IN
         private async Task LogVisitAsync(SqlConnection sqlConnection, IDbTransaction transaction, Guid workplaceVisitId, Guid buildingId, Guid hostUid, Guid OrganizationId, Guid? formCompletedByUid, string adminUserDisplayName, string? remoteIpAddress, string logAction, DateTime startDateUtc, DateTime endDateUtc, string purposeOfVisit)
         {
             string logSql = @"
-INSERT INTO [dbo].[tblWorkplaceVisits_Log] 
-    (id, InsertDateUtc, UpdatedByUid, UpdatedByDisplayName, 
-    UpdatedByIpAddress, LogDescription, OrganizationId, 
-    WorkplaceVisitId, BuildingId, RegisteredByVisitor, 
-    FormCompletedByUid, HostUid, StartDateUtc, 
-    StartDateLocal, EndDateUtc, EndDateLocal, 
-    PurposeOfVisit, CancelledDateUtc, CancelledDateLocal, 
-    Cancelled, Truncated, Deleted, OldEndDateUtc, 
-    OldEndDateLocal, OldCancelled, OldTruncated, 
-    OldDeleted, LogAction, CascadeFrom, CascadeLogId)
-VALUES 
-    (@id, @InsertDateUtc, @UpdatedByUid, @UpdatedByDisplayName, 
-    @UpdatedByIpAddress, @LogDescription, @OrganizationId, 
-    @WorkplaceVisitId, @BuildingId, @RegisteredByVisitor, 
-    @FormCompletedByUid, @HostUid, @StartDateUtc, 
-    @StartDateLocal, @EndDateUtc, @EndDateLocal, 
-    @PurposeOfVisit, @CancelledDateUtc, @CancelledDateLocal, 
-    @Cancelled, @Truncated, @Deleted, @OldEndDateUtc, 
-    @OldEndDateLocal, @OldCancelled, @OldTruncated, 
-    @OldDeleted, @LogAction, @CascadeFrom, @CascadeLogId);
-";
+                INSERT INTO [dbo].[tblWorkplaceVisits_Log] 
+                    (id, InsertDateUtc, UpdatedByUid, UpdatedByDisplayName, 
+                    UpdatedByIpAddress, LogDescription, OrganizationId, 
+                    WorkplaceVisitId, BuildingId, RegisteredByVisitor, 
+                    FormCompletedByUid, HostUid, StartDateUtc, 
+                    StartDateLocal, EndDateUtc, EndDateLocal, 
+                    PurposeOfVisit, CancelledDateUtc, CancelledDateLocal, 
+                    Cancelled, Truncated, Deleted, OldEndDateUtc, 
+                    OldEndDateLocal, OldCancelled, OldTruncated, 
+                    OldDeleted, LogAction, CascadeFrom, CascadeLogId)
+                VALUES 
+                    (@id, @InsertDateUtc, @UpdatedByUid, @UpdatedByDisplayName, 
+                    @UpdatedByIpAddress, @LogDescription, @OrganizationId, 
+                    @WorkplaceVisitId, @BuildingId, @RegisteredByVisitor, 
+                    @FormCompletedByUid, @HostUid, @StartDateUtc, 
+                    @StartDateLocal, @EndDateUtc, @EndDateLocal, 
+                    @PurposeOfVisit, @CancelledDateUtc, @CancelledDateLocal, 
+                    @Cancelled, @Truncated, @Deleted, @OldEndDateUtc, 
+                    @OldEndDateLocal, @OldCancelled, @OldTruncated, 
+                    @OldDeleted, @LogAction, @CascadeFrom, @CascadeLogId);
+                ";
 
             var logParameters = new DynamicParameters();
             logParameters.Add("@id", Guid.NewGuid(), DbType.Guid);
@@ -297,17 +227,17 @@ VALUES
         private async Task LogUserJoinAsync(SqlConnection sqlConnection, IDbTransaction transaction, Guid Uid, Guid workplaceVisitId, Guid OrganizationId, UserInfo user, string adminUserDisplayName, string? remoteIpAddress, string logAction)
         {
             string logUserJoinSql = @"
-INSERT INTO [dbo].[tblWorkplaceVisitUserJoin_Log] 
-    (id, InsertDateUtc, UpdatedByUid, UpdatedByDisplayName, 
-    UpdatedByIpAddress, LogDescription, OrganizationId, WorkplaceVisitId, 
-    Uid, FirstName, Surname, Email, MobileNumber, 
-    SignInDateUtc, SignOutDateUtc, LogAction)
-VALUES 
-    (@id, @InsertDateUtc, @UpdatedByUid, @UpdatedByDisplayName, 
-    @UpdatedByIpAddress, @LogDescription, @OrganizationId,@WorkplaceVisitId, 
-    @Uid, @FirstName, @Surname, @Email, @MobileNumber, 
-    @SignInDateUtc, @SignOutDateUtc, @LogAction);
-";
+                INSERT INTO [dbo].[tblWorkplaceVisitUserJoin_Log] 
+                    (id, InsertDateUtc, UpdatedByUid, UpdatedByDisplayName, 
+                    UpdatedByIpAddress, LogDescription, OrganizationId, WorkplaceVisitId, 
+                    Uid, FirstName, Surname, Email, MobileNumber, 
+                    SignInDateUtc, SignOutDateUtc, LogAction)
+                VALUES 
+                    (@id, @InsertDateUtc, @UpdatedByUid, @UpdatedByDisplayName, 
+                    @UpdatedByIpAddress, @LogDescription, @OrganizationId,@WorkplaceVisitId, 
+                    @Uid, @FirstName, @Surname, @Email, @MobileNumber, 
+                    @SignInDateUtc, @SignOutDateUtc, @LogAction);
+                ";
 
             var userJoinLogParameters = new DynamicParameters();
             userJoinLogParameters.Add("@id", Guid.NewGuid(), DbType.Guid);

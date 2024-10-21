@@ -3,14 +3,15 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using VisitorTabletAPITemplate.ObjectClasses;
 using VisitorTabletAPITemplate.Utilities;
+using VisitorTabletAPITemplate.VisitorTablet.Models;
 
 namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
 {
-    public class GetHostsRepository
+    public class UserRepository
     {
         private readonly AppSettings _appSettings;
 
-        public GetHostsRepository(AppSettings appSettings)
+        public UserRepository(AppSettings appSettings)
         {
             _appSettings = appSettings;
         }
@@ -55,25 +56,25 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
                 }
 
                 string sql = $@"
-select tblUsers.Uid as Value
-      ,tblUsers.DisplayName as Text
-      ,tblUsers.Email as SecondaryText
-      ,tblUsers.AvatarThumbnailUrl as ImageUrl
-from tblUsers
-inner join tblUserOrganizationJoin
-on tblUsers.Uid = tblUserOrganizationJoin.Uid
-where tblUsers.Deleted = 0
-and tblUserOrganizationJoin.OrganizationId = @organizationId
-";
+                    select tblUsers.Uid as Value
+                          ,tblUsers.DisplayName as Text
+                          ,tblUsers.Email as SecondaryText
+                          ,tblUsers.AvatarThumbnailUrl as ImageUrl
+                    from tblUsers
+                    inner join tblUserOrganizationJoin
+                    on tblUsers.Uid = tblUserOrganizationJoin.Uid
+                    where tblUsers.Deleted = 0
+                    and tblUserOrganizationJoin.OrganizationId = @organizationId
+                    ";
                 if (!includeDisabled)
                 {
                     sql += $@"
-and tblUsers.Disabled = 0";
+                    and tblUsers.Disabled = 0";
                 }
 
                 sql += $@"{whereQuery}                
-order by tblUsers.DisplayName
-";
+                    order by tblUsers.DisplayName
+                    ";
                 parameters.Add("@organizationId", organizationId, DbType.Guid, ParameterDirection.Input);
 
                 CommandDefinition commandDefinition = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
@@ -85,5 +86,25 @@ order by tblUsers.DisplayName
                 return selectListWithImageResponse;
             }
         }
+
+        public async Task<IEnumerable<Visitor>> GetVisitorsAsync(Guid hostUid, CancellationToken cancellationToken = default)
+        {
+            using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
+            {
+                string sql = @"
+                select u.FirstName, u.Surname, u.Uid
+                from dbo.tblWorkplaceVisitUserJoin u
+                join dbo.tblWorkplaceVisits w on u.WorkplaceVisitId = w.id
+                where w.hostUid = @hostUid";
+
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("@hostUid", hostUid, DbType.Guid, ParameterDirection.Input);
+
+                CommandDefinition commandDefinition = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
+
+                return await sqlConnection.QueryAsync<Visitor>(commandDefinition);
+            }
+        }
+
     }
 }

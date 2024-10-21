@@ -1,14 +1,12 @@
 ﻿using System.Text.Json.Serialization;
 using VisitorTabletAPITemplate.ObjectClasses;
 
-namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignIn
+namespace VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisitUserJoin.UpdateWorkplaceVisitUserSignOut
 {
-
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
-    [JsonSerializable(typeof(SignInRequest))]
+    [JsonSerializable(typeof(UpdateWorkplaceVisitUserSignOutRequest))]
     [JsonSerializable(typeof(List<SelectListItemGuid>))]
     [JsonSerializable(typeof(MyErrorResponse))]
     [JsonSerializable(typeof(MyInternalErrorResponse))]
-    public partial class SignInContext : JsonSerializerContext { }
-
+    public partial class UpdateWorkplaceVisitUserSignOutContext : JsonSerializerContext { }
 }

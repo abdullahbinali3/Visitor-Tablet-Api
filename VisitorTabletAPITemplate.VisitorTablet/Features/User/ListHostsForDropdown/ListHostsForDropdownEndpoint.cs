@@ -4,29 +4,29 @@ using VisitorTabletAPITemplate.ShaneAuth.Enums;
 using VisitorTabletAPITemplate.ShaneAuth.Services;
 using VisitorTabletAPITemplate.VisitorTablet.Repositories;
 
-namespace VisitorTabletAPITemplate.VisitorTablet.Features.Host.GetHosts
+namespace VisitorTabletAPITemplate.VisitorTablet.Features.User.ListHostsForDropdown
 {
-    public class GetHostsEndpoint : Endpoint<GetHostsRequest>
+    public sealed class ListHostsForDropdownEndpoint : Endpoint<ListHostsForDropdownRequest>
     {
 
-        private readonly GetHostsRepository _GetHostsRepository;
+        private readonly UserRepository _UserRepository;
         private readonly AuthCacheService _authCacheService;
 
-        public GetHostsEndpoint(GetHostsRepository GetHostsRepository,
+        public ListHostsForDropdownEndpoint(UserRepository UserRepository,
             AuthCacheService authCacheService)
         {
-            _GetHostsRepository = GetHostsRepository;
+            _UserRepository = UserRepository;
             _authCacheService = authCacheService;
         }
 
         public override void Configure()
         {
             Get("/host/{organizationId}/listForDropdown");
-            SerializerContext(GetHostsContext.Default);
+            SerializerContext(ListHostsForDropdownContext.Default);
             Policies("User");
         }
 
-        public override async Task HandleAsync(GetHostsRequest req, CancellationToken ct)
+        public override async Task HandleAsync(ListHostsForDropdownRequest req, CancellationToken ct)
         {
             // Get logged in user's UID
             Guid? userId = User.GetId();
@@ -48,17 +48,15 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Host.GetHosts
             }
 
             // Query data
-            SelectListWithImageResponse data = await _GetHostsRepository.ListUsersForDropdownAsync(req.OrganizationId!.Value, req.Search, req.RequestCounter, req.IncludeDisabled!.Value, ct);
+            SelectListWithImageResponse data = await _UserRepository.ListUsersForDropdownAsync(req.OrganizationId!.Value, req.Search, req.RequestCounter, req.IncludeDisabled!.Value, ct);
 
             await SendAsync(data);
         }
 
-        private async Task ValidateInputAsync(GetHostsRequest req, Guid userId, CancellationToken cancellationToken)
+        private async Task ValidateInputAsync(ListHostsForDropdownRequest req, Guid userId, CancellationToken cancellationToken)
         {
             // Validate user has minimum required access to organization to perform this action
             await this.ValidateUserOrganizationRoleAsync(req.OrganizationId, userId, UserOrganizationRole.Tablet, _authCacheService, cancellationToken);
-
-            // Validate input
 
             // Validate IncludeDisabled
             if (!req.IncludeDisabled.HasValue)

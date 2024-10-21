@@ -440,11 +440,10 @@ static void SetupRepositories(WebApplicationBuilder builder)
 static void SetupVisitorTabletRepositories(WebApplicationBuilder builder)
 {
     builder.Services.AddSingleton<VisitorTabletExamplesRepository>();
-    builder.Services.AddSingleton<GetHostsRepository>();
-    builder.Services.AddSingleton<GetVisitorsRepository>();
-    builder.Services.AddSingleton<VisitorTabletVisitorRepository>();
+    builder.Services.AddSingleton<UserRepository>();
     builder.Services.AddSingleton<VisitorTabletBuildingsRepository>();
-    builder.Services.AddSingleton<TabletVisitRepository>();
+    builder.Services.AddSingleton<WorkplaceVisitUserJoinRepository>();
+    builder.Services.AddSingleton<WorkplaceVisitsRepository>();
 
 }
 

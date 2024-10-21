@@ -1,6 +1,6 @@
-﻿namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.Register
+﻿namespace VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisits.CreateWorkplaceVisit
 {
-    public sealed class RegisterRequest
+    public sealed class CreateWorkplaceVisitRequest
     {
         public Guid BuildingId { get; set; }
         public Guid OrganizationId { get; set; }

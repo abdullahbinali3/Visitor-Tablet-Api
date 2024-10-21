@@ -1,25 +1,25 @@
 ﻿using VisitorTabletAPITemplate.Enums;
 using VisitorTabletAPITemplate.VisitorTablet.Repositories;
 
-namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignOut
+namespace VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisitUserJoin.UpdateWorkplaceVisitUserSignOut
 {
-    public sealed class SignOutEndpoint : Endpoint<SignOutRequest>
+    public sealed class UpdateWorkplaceVisitUserSignOutEndpoint : Endpoint<UpdateWorkplaceVisitUserSignOutRequest>
     {
-        private readonly VisitorTabletVisitorRepository _VisitorTabletVisitorRepository;
+        private readonly WorkplaceVisitUserJoinRepository _WorkplaceVisitUserJoinRepository;
 
-        public SignOutEndpoint(VisitorTabletVisitorRepository VisitorTabletVisitorRepository)
+        public UpdateWorkplaceVisitUserSignOutEndpoint(WorkplaceVisitUserJoinRepository WorkplaceVisitUserJoinRepository)
         {
-            _VisitorTabletVisitorRepository = VisitorTabletVisitorRepository;
+            _WorkplaceVisitUserJoinRepository = WorkplaceVisitUserJoinRepository;
         }
 
         public override void Configure()
         {
             Put("/visitor/signout");
-            SerializerContext(SignOutContext.Default);
+            SerializerContext(UpdateWorkplaceVisitUserSignOutContext.Default);
             Policies("User");
         }
 
-        public override async Task HandleAsync(SignOutRequest req, CancellationToken ct)
+        public override async Task HandleAsync(UpdateWorkplaceVisitUserSignOutRequest req, CancellationToken ct)
         {
             // Validate request
             ValidateInput(req);
@@ -33,8 +33,8 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignOut
             // Loop through Uids and try updating the SignOutDateUtc for each
             foreach (var uid in req.Uid)
             {
-              
-                var visitUpdateResult = await _VisitorTabletVisitorRepository.CancelOrTruncateVisitAsync(req, uid);
+
+                var visitUpdateResult = await _WorkplaceVisitUserJoinRepository.SignOutAsync(req, uid);
 
                 if (visitUpdateResult != SqlQueryResult.Ok)
                 {
@@ -47,7 +47,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignOut
             await SendOkAsync(true);
         }
 
-        private void ValidateInput(SignOutRequest req)
+        private void ValidateInput(UpdateWorkplaceVisitUserSignOutRequest req)
         {
             if (req.HostUid == Guid.Empty)
             {
@@ -59,7 +59,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignOut
                 AddError(m => m.Uid, "At least one Uid is required.", "error.uidsRequired");
             }
 
-            if ( req.SignOutDate == null)
+            if (req.SignOutDate == null)
             {
                 AddError(m => m.SignOutDate, "SignOutDateUtc is required.", "error.signOutDateRequired");
             }

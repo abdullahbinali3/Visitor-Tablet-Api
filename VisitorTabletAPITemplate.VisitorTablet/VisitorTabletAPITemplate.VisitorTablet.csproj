@@ -12,9 +12,4 @@
     <ProjectReference Include="..\VisitorTabletAPITemplate.Shared\VisitorTabletAPITemplate.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Features\WorkplaceVisits\CreateWorkplaceVisit\" />
-    <Folder Include="Features\WorkplaceVisitUserJoin\UpdateWorkplaceVisitUserSignIn\" />
-  </ItemGroup>
-
 </Project>

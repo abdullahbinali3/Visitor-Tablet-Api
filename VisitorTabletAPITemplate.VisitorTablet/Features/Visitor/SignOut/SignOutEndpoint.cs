@@ -30,25 +30,11 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignOut
                 return;
             }
 
-            if (req.SignOutDateUtc.HasValue)
-            {
-                req.SignOutDateUtc = req.SignOutDateUtc.Value.ToUniversalTime();  // Convert to UTC if it has a value
-            }
-            else
-            {
-                AddError("Failed to cancel or truncate visit.", "error.valueNotExist");
-                await SendErrorsAsync();
-            }
-
             // Loop through Uids and try updating the SignOutDateUtc for each
             foreach (var uid in req.Uid)
             {
-                
-                // Determine if the visit needs to be cancelled or truncated
-                var currentTimeUtc = req.SignOutDateUtc;
-                var currentTimeLocal = DateTime.Now;  // Assuming the server's local time is the visit's local time
-
-                var visitUpdateResult = await _VisitorTabletVisitorRepository.CancelOrTruncateVisitAsync(req.WorkplaceVisitId, currentTimeUtc, currentTimeLocal);
+              
+                var visitUpdateResult = await _VisitorTabletVisitorRepository.CancelOrTruncateVisitAsync(req, uid);
 
                 if (visitUpdateResult != SqlQueryResult.Ok)
                 {
@@ -63,9 +49,9 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignOut
 
         private void ValidateInput(SignOutRequest req)
         {
-            if (req.WorkplaceVisitId == Guid.Empty)
+            if (req.HostUid == Guid.Empty)
             {
-                AddError(m => m.WorkplaceVisitId, "WorkplaceVisitId is required.", "error.workplaceVisitIdRequired");
+                AddError(m => m.HostUid, "HostUid is required.", "error.HostUid");
             }
 
             if (req.Uid == null || !req.Uid.Any())
@@ -73,9 +59,9 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Visitor.SignOut
                 AddError(m => m.Uid, "At least one Uid is required.", "error.uidsRequired");
             }
 
-            if (!req.SignOutDateUtc.HasValue)
+            if ( req.SignOutDate == null)
             {
-                AddError(m => m.SignOutDateUtc, "SignOutDateUtc is required.", "error.signOutDateRequired");
+                AddError(m => m.SignOutDate, "SignOutDateUtc is required.", "error.signOutDateRequired");
             }
         }
     }

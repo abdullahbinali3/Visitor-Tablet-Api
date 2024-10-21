@@ -6,10 +6,10 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.User.ListVisitorsForDr
 {
     public class ListVisitorsForDropdownEndpoint : Endpoint<ListVisitorsForDropdownRequest>
     {
-        private readonly UserRepository _UserRepository;
+        private readonly VisitorTabletUsersRepository _UserRepository;
         private readonly AuthCacheService _authCacheService;
 
-        public ListVisitorsForDropdownEndpoint(UserRepository UserRepository,
+        public ListVisitorsForDropdownEndpoint(VisitorTabletUsersRepository UserRepository,
             AuthCacheService authCacheService)
         {
             _UserRepository = UserRepository;

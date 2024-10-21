@@ -9,10 +9,10 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.User.ListHostsForDropd
     public sealed class ListHostsForDropdownEndpoint : Endpoint<ListHostsForDropdownRequest>
     {
 
-        private readonly UserRepository _UserRepository;
+        private readonly VisitorTabletUsersRepository _UserRepository;
         private readonly AuthCacheService _authCacheService;
 
-        public ListHostsForDropdownEndpoint(UserRepository UserRepository,
+        public ListHostsForDropdownEndpoint(VisitorTabletUsersRepository UserRepository,
             AuthCacheService authCacheService)
         {
             _UserRepository = UserRepository;

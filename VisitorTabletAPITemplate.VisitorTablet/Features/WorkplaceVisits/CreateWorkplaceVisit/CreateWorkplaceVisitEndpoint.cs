@@ -6,9 +6,9 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisits.Create
 {
     public sealed class CreateWorkplaceVisitEndpoint : Endpoint<CreateWorkplaceVisitRequest>
     {
-        private readonly WorkplaceVisitsRepository _WorkplaceVisitsRepository;
+        private readonly VisitorTabletWorkplaceVisitsRepository _WorkplaceVisitsRepository;
 
-        public CreateWorkplaceVisitEndpoint(WorkplaceVisitsRepository WorkplaceVisitsRepository)
+        public CreateWorkplaceVisitEndpoint(VisitorTabletWorkplaceVisitsRepository WorkplaceVisitsRepository)
         {
             _WorkplaceVisitsRepository = WorkplaceVisitsRepository;
         }

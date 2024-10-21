@@ -5,9 +5,9 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisitUserJoin
 {
     public sealed class UpdateWorkplaceVisitUserSignOutEndpoint : Endpoint<UpdateWorkplaceVisitUserSignOutRequest>
     {
-        private readonly WorkplaceVisitUserJoinRepository _WorkplaceVisitUserJoinRepository;
+        private readonly VisitorTabletWorkplaceVisitUserJoinRepository _WorkplaceVisitUserJoinRepository;
 
-        public UpdateWorkplaceVisitUserSignOutEndpoint(WorkplaceVisitUserJoinRepository WorkplaceVisitUserJoinRepository)
+        public UpdateWorkplaceVisitUserSignOutEndpoint(VisitorTabletWorkplaceVisitUserJoinRepository WorkplaceVisitUserJoinRepository)
         {
             _WorkplaceVisitUserJoinRepository = WorkplaceVisitUserJoinRepository;
         }

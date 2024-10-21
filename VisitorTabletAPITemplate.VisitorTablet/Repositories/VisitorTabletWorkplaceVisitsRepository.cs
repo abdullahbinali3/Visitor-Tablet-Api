@@ -7,11 +7,11 @@ using VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisits.CreateWork
 
 namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
 {
-    public sealed class WorkplaceVisitsRepository
+    public sealed class VisitorTabletWorkplaceVisitsRepository
     {
         private readonly AppSettings _appSettings;
 
-        public WorkplaceVisitsRepository(AppSettings appSettings)
+        public VisitorTabletWorkplaceVisitsRepository(AppSettings appSettings)
         {
             _appSettings = appSettings;
         }

@@ -7,11 +7,11 @@ using VisitorTabletAPITemplate.VisitorTablet.Models;
 
 namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
 {
-    public class UserRepository
+    public class VisitorTabletUsersRepository
     {
         private readonly AppSettings _appSettings;
 
-        public UserRepository(AppSettings appSettings)
+        public VisitorTabletUsersRepository(AppSettings appSettings)
         {
             _appSettings = appSettings;
         }

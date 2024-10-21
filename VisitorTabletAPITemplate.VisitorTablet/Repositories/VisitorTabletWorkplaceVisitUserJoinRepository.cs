@@ -7,11 +7,11 @@ using VisitorTabletAPITemplate.VisitorTablet.Features.WorkplaceVisitUserJoin.Upd
 
 namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
 {
-    public sealed class WorkplaceVisitUserJoinRepository
+    public sealed class VisitorTabletWorkplaceVisitUserJoinRepository
     {
         private readonly AppSettings _appSettings;
 
-        public WorkplaceVisitUserJoinRepository(AppSettings appSettings)
+        public VisitorTabletWorkplaceVisitUserJoinRepository(AppSettings appSettings)
         {
             _appSettings = appSettings;
         }

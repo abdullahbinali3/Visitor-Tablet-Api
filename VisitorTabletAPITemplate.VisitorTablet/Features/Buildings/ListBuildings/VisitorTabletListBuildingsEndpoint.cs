@@ -48,7 +48,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Features.Buildings.ListBuilding
             }
 
             // Query data
-            (SqlQueryResult queryResult, List<SelectListItemGuid>? data) = await _visitorTabletBuildingsRepository.ListBuildingsAsync(req.OrganizationId!.Value, userId!.Value, ct);
+            (SqlQueryResult queryResult, List<SelectListItemGuid>? data) = await _visitorTabletBuildingsRepository.ListBuildingsForDropdownAsync(req.OrganizationId!.Value, userId!.Value, ct);
 
             // Validate result
             ValidateOutput(queryResult);

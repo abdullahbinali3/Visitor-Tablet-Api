@@ -22,7 +22,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
         /// <param name="organizationId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<(SqlQueryResult, List<SelectListItemGuid>?)> ListBuildingsAsync(Guid organizationId, Guid adminUserUid, CancellationToken cancellationToken = default)
+        public async Task<(SqlQueryResult, List<SelectListItemGuid>?)> ListBuildingsForDropdownAsync(Guid organizationId, Guid adminUserUid, CancellationToken cancellationToken = default)
         {
             using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
             {

@@ -2,8 +2,8 @@
 {
     public sealed class SignOutRequest
     {
-        public Guid WorkplaceVisitId { get; set; }
+        public Guid HostUid { get; set; }
         public List<Guid> Uid { get; set; }
-        public DateTime? SignOutDateUtc { get; set; }
+        public DateTime SignOutDate { get; set; }
     }
 }

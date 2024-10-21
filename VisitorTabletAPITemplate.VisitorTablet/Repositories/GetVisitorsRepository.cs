@@ -14,7 +14,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
             _appSettings = appSettings;
         }
 
-        public async Task<IEnumerable<VisitorDto>> GetVisitorsAsync(Guid hostUid, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Visitor>> GetVisitorsAsync(Guid hostUid, CancellationToken cancellationToken = default)
         {
             using (SqlConnection sqlConnection = new SqlConnection(_appSettings.ConnectionStrings.VisitorTablet))
             {
@@ -29,7 +29,7 @@ namespace VisitorTabletAPITemplate.VisitorTablet.Repositories
 
                 CommandDefinition commandDefinition = new CommandDefinition(sql, parameters, cancellationToken: cancellationToken);
 
-                return await sqlConnection.QueryAsync<VisitorDto>(commandDefinition);
+                return await sqlConnection.QueryAsync<Visitor>(commandDefinition);
             }
         }
     }
